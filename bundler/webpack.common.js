@@ -1,12 +1,14 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path')
 
 module.exports = {
     entry: path.resolve(__dirname, '../src/index.ts'),
     output:
     {
-        filename: 'bundle.[hash].js',
+        hashFunction: 'xxhash64',
+        filename: 'bundle.[contenthash].js',
         path: path.resolve(__dirname, '../dist')
     },
     devtool: 'source-map',
@@ -16,62 +18,70 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, '../src/index.html'),
             minify: true
-        })
+        }),
+        new MiniCSSExtractPlugin(),
     ],
-    module:
-    {
-        rules:
-        [
+    resolve: {
+        alias: {
+            three: path.resolve('./node_modules/three'),
+        },
+        extensions: ['.tsx', '.ts', '.js'],
+    },
+    module: {
+        rules: [
             // HTML
             {
                 test: /\.(html)$/,
-                use: ['html-loader']
+                use: ['html-loader'],
             },
-
+            {
+                test: /\.ts?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
             // JS
             {
-                test: /\.js$/,
+                test: /\.tsx$/,
                 exclude: /node_modules/,
-                use:
-                [
-                    'babel-loader'
-                ]
+                use: ['babel-loader'],
             },
 
             // CSS
             {
                 test: /\.css$/,
-                use:
-                [
-                    'style-loader',
-                    'css-loader'
-                ]
+                use: [MiniCSSExtractPlugin.loader, 'css-loader'],
             },
 
             // Images
             {
                 test: /\.(jpg|png|gif|svg)$/,
-                use:
-                [
-                    {
-                        loader: 'file-loader',
-                        options:
-                        {
-                            outputPath: 'assets/images/'
-                        }
-                    }
-                ]
+                type: 'asset/resource',
+                generator: {
+                    filename: 'assets/images/[hash][ext]',
+                },
             },
-
+            // Audio
+            {
+                test: /\.(mp3|wav)$/,
+                loader: 'file-loader',
+                options: {
+                    name: '[path][name].[ext]',
+                },
+            },
+            // Fonts
+            {
+                test: /\.(ttf|eot|woff|woff2)$/,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'assets/fonts/[hash][ext]',
+                },
+            },
             // Shaders
             {
                 test: /\.(glsl|vs|fs|vert|frag)$/,
                 exclude: /node_modules/,
-                use: [
-                    'raw-loader',
-                    'glslify-loader'
-                ]
-            }
-        ]
-    }
+                use: ['glslify-import-loader', 'raw-loader', 'glslify-loader'],
+            },
+        ],
+    },
 }
