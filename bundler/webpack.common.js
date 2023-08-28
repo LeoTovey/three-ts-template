@@ -34,11 +34,6 @@ module.exports = {
                 test: /\.(html)$/,
                 use: ['html-loader'],
             },
-            {
-                test: /\.ts?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/,
-            },
             // JS
             {
                 test: /\.tsx$/,
